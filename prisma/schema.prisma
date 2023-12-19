@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ChiTietPhieuNhapKho {
+  id           String        @id @default(cuid()) @db.VarChar(50)
+  quantity     Int           @default(0)
+  total_price  Int           @default(0)
+  id_book      String?       @db.VarChar(50)
+  id_receipt   String?       @db.VarChar(50)
+  Sach         Sach?         @relation(fields: [id_book], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  PhieuNhapKho PhieuNhapKho? @relation(fields: [id_receipt], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model ChiTietPhieuYeuCau {
+  id              String        @id @default(cuid()) @db.VarChar(50)
+  title           String        @db.VarChar(50)
+  date            DateTime      @db.Date
+  quantity        Int
+  id_book         String?       @db.VarChar(50)
+  id_request_form String?       @db.VarChar(50)
+  Sach            Sach?         @relation(fields: [id_book], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  PhieuYeuCau     PhieuYeuCau?  @relation(fields: [id_request_form], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  NhanBanSach     NhanBanSach[]
+}
+
+model LoaiSach {
+  id    String @id @default(cuid()) @db.VarChar(50)
+  title String @db.VarChar(50)
+  Sach  Sach[]
+}
+
+model Mon {
+  id    String @id @default(cuid()) @db.VarChar(50)
+  title String @db.VarChar(100)
+  Sach  Sach[]
+}
+
+model NhaXuatBan {
+  id       String @id @default(cuid()) @db.VarChar(50)
+  year     String @db.VarChar(4)
+  title    String @db.VarChar(100)
+  address  String @db.VarChar(100)
+  phone    String @db.VarChar(10)
+  Stringch Sach[]
+}
+
+model NhanBanSach {
+  id                   Int                 @id(map: "nhanbansach_pkey") @default(autoincrement())
+  isbn                 String              @db.VarChar
+  status               BookStatus          @default(AVAILABLE)
+  price                String              @db.VarChar
+  id_book              String              @db.VarChar(50)
+  Sach                 Sach                @relation(fields: [id_book], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ChiTietPhieuYeuCau   ChiTietPhieuYeuCau? @relation(fields: [chiTietPhieuYeuCauId], references: [id])
+  chiTietPhieuYeuCauId String?             @db.VarChar(50)
+}
+
+model PhieuNhapKho {
+  id                  String                @id @default(cuid()) @db.VarChar(50)
+  received_date       DateTime              @db.Date
+  id_user             String                @db.VarChar(50)
+  ChiTietPhieuNhapKho ChiTietPhieuNhapKho[]
+  TaiKhoan            TaiKhoan              @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model PhieuYeuCau {
+  id                 String               @id @default(cuid()) @db.VarChar(50)
+  id_user            String               @db.VarChar(50)
+  type               RequestType          @default(BORROW)
+  request_date       DateTime             @db.Date
+  due_date           DateTime             @db.Date
+  ChiTietPhieuYeuCau ChiTietPhieuYeuCau[]
+  TaiKhoan           TaiKhoan             @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Sach {
+  id                  String                @id @default(cuid()) @db.VarChar(50)
+  id_type_book        String                @db.VarChar(50)
+  id_subject          String                @db.VarChar(50)
+  title               String                @db.VarChar(50)
+  publisher           String                @db.VarChar(50)
+  author              String                @db.VarChar(50)
+  id_user             String                @db.VarChar(50)
+  id_publisher        String                @db.VarChar(50)
+  ChiTietPhieuNhapKho ChiTietPhieuNhapKho[]
+  ChiTietPhieuYeuCau  ChiTietPhieuYeuCau[]
+  NhanBanSach         NhanBanSach[]
+  NhaXuatBan          NhaXuatBan            @relation(fields: [id_publisher], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Mon                 Mon                   @relation(fields: [id_subject], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  LoaiSach            LoaiSach              @relation(fields: [id_type_book], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  TaiKhoan            TaiKhoan              @relation(fields: [id_user], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model TaiKhoan {
+  id           String         @id @default(cuid()) @db.VarChar(50)
+  name         String         @db.VarChar(50)
+  phone        String         @db.VarChar(10)
+  email        String         @unique @db.VarChar(100)
+  address      String         @db.VarChar(100)
+  password     String         @db.VarChar
+  role         Role           @default(SUPER_ADMIN)
+  PhieuNhapKho PhieuNhapKho[]
+  PhieuYeuCau  PhieuYeuCau[]
+  Sach         Sach[]
+}
+
+enum Role {
+  SUPER_ADMIN
+  USER
+}
+
+enum RequestType {
+  BORROW
+  RETURN
+  PAY
+}
+
+enum BookStatus {
+  AVAILABLE
+  BORROWED
+  LOST
+}
